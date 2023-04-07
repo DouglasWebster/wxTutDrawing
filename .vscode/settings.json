@@ -78,5 +78,9 @@
         "unordered_map": "cpp",
         "unordered_set": "cpp",
         "utility": "cpp"
-    }
+    },
+    "cSpell.words": [
+        "Distrib",
+        "Sizer"
+    ]
 }
