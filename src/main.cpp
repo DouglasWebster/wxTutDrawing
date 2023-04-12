@@ -1,13 +1,16 @@
 
 #include <random>
+#include <wx/listbook.h>
 #include <wx/wx.h>
 
+#include "chartcontrol.h"
 #include "drawingcanvas.h"
 
 class MyApp : public wxApp {
 public:
     virtual bool OnInit();
 };
+
 class MyFrame : public wxFrame {
 public:
     MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size);
@@ -22,6 +25,7 @@ private:
     wxPanel* createButtonPanel(wxWindow* parent);
 
     DrawingCanvas* canvas;
+    ChartControl* chart;
 
     int rectCount { 0 };
     std::mt19937 randomGen;
@@ -39,10 +43,17 @@ bool MyApp::OnInit()
 MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     : wxFrame(NULL, wxID_ANY, title, pos, size)
 {
-    wxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-    auto buttonPanel = createButtonPanel(this);
+    auto tabs = new wxListbook(this, wxID_ANY, wxDefaultPosition, this->FromDIP(wxSize(640, 480)), wxNB_TOP);
+    tabs->SetInternalBorder(0);
 
-    canvas = new DrawingCanvas(this, wxID_ANY, wxDefaultPosition, this->FromDIP(wxSize(640, 480)));
+    wxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+    mainSizer->Add(tabs, 1, wxEXPAND);
+
+    wxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+
+    wxPanel* drawingPanelWithButtons = new wxPanel(tabs);
+    auto buttonPanel = createButtonPanel(drawingPanelWithButtons);
+    canvas = new DrawingCanvas(drawingPanelWithButtons, wxID_ANY, wxDefaultPosition, wxDefaultSize);
     canvas->Bind(CANVAS_RECT_ADDED, &MyFrame::OnRectAdded, this);
     canvas->Bind(CANVAS_RECT_REMOVED, &MyFrame::OnRectRemoved, this);
 
@@ -51,7 +62,18 @@ MyFrame::MyFrame(const wxString& title, const wxPoint& pos, const wxSize& size)
     sizer->Add(canvas, 1, wxEXPAND | wxALL, 0);
     sizer->Add(buttonPanel, 0, wxEXPAND | wxALL, 0);
 
-    this->SetSizerAndFit(sizer);
+    drawingPanelWithButtons->SetSizerAndFit(sizer);
+
+    tabs->AddPage(drawingPanelWithButtons, "Rectangles");
+
+    chart = new ChartControl(this, wxID_ANY, wxDefaultPosition, this->FromDIP(wxSize(640, 480)));
+    chart->title = "Important Chart";
+    chart->values = { 0.34, -0.17, 0.98, 0.33 };
+
+    tabs->AddPage(chart, "Chart");
+    tabs->SetSelection(1);
+
+    this->SetSizerAndFit(mainSizer);
 
     CreateStatusBar(1);
     SetStatusText("Ready", 0);
